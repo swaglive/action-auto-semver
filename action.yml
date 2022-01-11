@@ -33,7 +33,7 @@ runs:
   - id: last_tag
     shell: bash
     run: |
-      [[ $(gh release list -R ${{ github.repo }} -L 1) =~ \((.+)\) ]] && echo "::set-output name=last_tag::${BASH_REMATCH[2]}"
+      [[ $(gh release list -R ${{ github.repository }} -L 1) =~ \((.+)\) ]] && echo "::set-output name=last_tag::${BASH_REMATCH[2]}"
   - id: semver
     shell: python
     run: |
