@@ -44,7 +44,7 @@ runs:
       GITHUB_TOKRN: ${{ inputs.token }}
     run: |
       gh version
-      [[ $(gh release list -L 1) =~ \((.+)\) ]] && echo "::set-output name=tag_name::${BASH_REMATCH[2]}"
+      [[ $(GITHUB_TOKEN=$GITHUB_TOKEN gh release list -L 1) =~ \((.+)\) ]] && echo "::set-output name=tag_name::${BASH_REMATCH[2]}"
   - id: semver
     shell: python
     run: |
