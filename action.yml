@@ -6,7 +6,7 @@ inputs:
     required: false
   pattern:
     description: Semver pattern string
-    required: true
+    required: false
     default: ^v?(?P<major>[0-9]+)(?:\.(?P<minor>[0-9]+))?(?:\.(?P<patch>[0-9]+))?(?:\-(?P<prerelease>[\w-]+))?(?:\+(?P<build>[\w-]+))?$
 # outputs:
 #   version:
@@ -50,7 +50,8 @@ runs:
               continue
 
             os.environ[key]=value
-  - run: |
+  - shell: bash
+    run: |
     echo $major
     major=0
     minor=0
