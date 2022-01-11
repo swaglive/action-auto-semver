@@ -41,11 +41,10 @@ runs:
   - id: last_tag
     shell: bash
     env:
-      GITHUB_TOKRN: ${{ inputs.token }}
+      GITHUB_TOKEN: ${{ inputs.token }}
     run: |
       gh version
-      gh release list -L 1 > tmp
-      [[ $(cat tmp) =~ \((.+)\) ]] && echo "::set-output name=tag_name::${BASH_REMATCH[2]}"
+      [[ $(gh release list -L 1) =~ \((.+)\) ]] && echo "::set-output name=tag_name::${BASH_REMATCH[2]}"
   - id: semver
     shell: python
     run: |
