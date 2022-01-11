@@ -30,10 +30,10 @@ inputs:
 runs:
   using: composite
   steps:
-  - id: Get latest tasg
+  - id: last_tag
     shell: bash
     run: |
-      [[ $(gh release list -R ${{ github.repo }} -L 1) =~ \((.+)\) ]] && last_tag=${BASH_REMATCH[2]}
+      [[ $(gh release list -R ${{ github.repo }} -L 1) =~ \((.+)\) ]] && echo "::set-output name=last_tag::${BASH_REMATCH[2]}"
   - id: semver
     shell: python
     run: |
