@@ -50,9 +50,7 @@ runs:
               continue
 
             os.environ[key]=value
-
   - run: |
-
     echo $major
     major=0
     minor=0
