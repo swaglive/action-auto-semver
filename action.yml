@@ -31,6 +31,7 @@ runs:
   using: composite
   steps:
   - id: Get latest tasg
+    shell: bash
     run: |
       [[ $(gh release list -R ${{ github.repo }} -L 1) =~ \((.+)\) ]] && last_tag=${BASH_REMATCH[2]}
   - id: semver
@@ -52,43 +53,43 @@ runs:
             os.environ[key]=value
   - shell: bash
     run: |
-    echo $major
-    major=0
-    minor=0
-    patch=0
+      echo $major
+      major=0
+      minor=0
+      patch=0
 
-    MAJOR_LABELS=($(echo ${{ inputs.major_lebels }} | tr ',' ' '))
-    MINOR_LABELS=($(echo ${{ inputs.minor_labels }} | tr ',' ' '))
-    PATCH_LABELS=($(echo ${{ inputs.patch_labels }} | tr ',' ' '))
+      MAJOR_LABELS=($(echo ${{ inputs.major_lebels }} | tr ',' ' '))
+      MINOR_LABELS=($(echo ${{ inputs.minor_labels }} | tr ',' ' '))
+      PATCH_LABELS=($(echo ${{ inputs.patch_labels }} | tr ',' ' '))
 
-    echo ${MAJOR_LABELS[*]}
-    echo ${MINOR_LABELS[*]}
-    echo ${PATCH_LABELS[*]}
+      echo ${MAJOR_LABELS[*]}
+      echo ${MINOR_LABELS[*]}
+      echo ${PATCH_LABELS[*]}
 
-    [[ $(gh release list -R ${{ github.repo }} -L 1) =~ \((.+)\) ]] && last_tag=${BASH_REMATCH[2]}
+      [[ $(gh release list -R ${{ github.repo }} -L 1) =~ \((.+)\) ]] && last_tag=${BASH_REMATCH[2]}
 
-    # Fetch commit since last tag
+      # Fetch commit since last tag
 
-    if $last_tag
-      do
-        git fetch --tags
-        commits=($(git log HEAD...$last_tag --format="%H"))
-      done
-    
-    # Parse pr labels
-    if $commits
-      for commit in $commits
+      if $last_tag
         do
-          lebels=($(gh pr list --limit 1 --state merged --base release --search '$commit' --json  mergeCommit,number,labels,author,title | jq '.[0].labels | to_entries[].value.name'))
-          [[ $labels[*] =~  ([$( IFS='|'; echo "${MAJOR_LABELS[*]}")]+) ]] && MAJOR_BUPB=1
-          [[ $labels[*] =~  ([$( IFS='|'; echo "${MINOR_LABELS[*]}")]+) ]] && MINOR_BUMP=1
-          [[ $labels[*] =~  ([$( IFS='|'; echo "${PATCH_LABELS[*]}")]+) ]] && PATCH_BUMP=1
+          git fetch --tags
+          commits=($(git log HEAD...$last_tag --format="%H"))
         done
-    fi
+      
+      # Parse pr labels
+      if $commits
+        for commit in $commits
+          do
+            lebels=($(gh pr list --limit 1 --state merged --base release --search '$commit' --json  mergeCommit,number,labels,author,title | jq '.[0].labels | to_entries[].value.name'))
+            [[ $labels[*] =~  ([$( IFS='|'; echo "${MAJOR_LABELS[*]}")]+) ]] && MAJOR_BUPB=1
+            [[ $labels[*] =~  ([$( IFS='|'; echo "${MINOR_LABELS[*]}")]+) ]] && MINOR_BUMP=1
+            [[ $labels[*] =~  ([$( IFS='|'; echo "${PATCH_LABELS[*]}")]+) ]] && PATCH_BUMP=1
+          done
+      fi
 
-    [[$PATCH_BUMP == 1]] && patch=$((patch+1))
-    [[$MINOR_BUMP == 1]] && minor=$((minor+1)) && patch=0
-    [[$MAJOR_BUMP == 1]] && major=$((major+1)) && minor=0 && patch=0
+      [[$PATCH_BUMP == 1]] && patch=$((patch+1))
+      [[$MINOR_BUMP == 1]] && minor=$((minor+1)) && patch=0
+      [[$MAJOR_BUMP == 1]] && major=$((major+1)) && minor=0 && patch=0
 
 
     
