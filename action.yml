@@ -8,6 +8,14 @@ inputs:
     description: Semver pattern string
     required: false
     default: ^v?(?P<major>[0-9]+)(?:\.(?P<minor>[0-9]+))?(?:\.(?P<patch>[0-9]+))?(?:\-(?P<prerelease>[\w-]+))?(?:\+(?P<build>[\w-]+))?$
+  token:
+    description: Github Token
+    required: true
+    default: ${{ github.token }}
+  repository:
+    description: Repository to create the release for
+    required: true
+    default: ${{ github.repository }}
 # outputs:
 #   version:
 #     description: The full matched version string
@@ -32,15 +40,17 @@ runs:
   steps:
   - id: last_tag
     shell: bash
+    env:
+      GITHUB_TOKRN: ${{ inputs.token}}
     run: |
-      [[ $(gh release list -R ${{ github.repository }} -L 1) =~ \((.+)\) ]] && echo "::set-output name=last_tag::${BASH_REMATCH[2]}"
+      [[ $(gh release list -L 1) =~ \((.+)\) ]] && echo "::set-output name=tag_name::${BASH_REMATCH[2]}"
   - id: semver
     shell: python
     run: |
       import re
       import os
 
-      input = '${{ inputs.input }}'
+      input = '${{ steps.last_tags.output.tag_name }}'
       pattern = re.compile('${{ inputs.pattern }}')
 
       if matched := pattern.match(input):
