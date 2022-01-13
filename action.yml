@@ -35,12 +35,14 @@ runs:
       run: |
         commit=${{ github.sha }}
         base='${{ github.ref }}'
+        # TODO: if pull request has multiple labels, how to acquire multiple labels
         labels=($(gh pr list --limit 1 --state merged --search '$commit' --json  mergeCommit,labels,author,title | jq '.[0].labels | to_entries[].value.name'))
         echo "::set-output name=current_labels::$labels"
     - id: calculate-semver
       shell: python
       run: |
-        prev = ${{ steps.last_tag.outputs.tag_name }}
+        prev = '${{ steps.last_tag.outputs.tag_name }}'
+
         labels = ${{ steps.get_labels.outputs.current_labels }}
         printf(f'{prev} {labels}')
 
