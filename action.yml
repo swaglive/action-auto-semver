@@ -70,4 +70,5 @@ runs:
         elif bump_patch:
             patch = patch + 1;
         version = f'{major}.{minor}.{patch}'
+        print(f'{version}')
         print(f'::set-output name=version::{version}')
