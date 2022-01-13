@@ -44,7 +44,7 @@ runs:
         prev = '${{ steps.last_tag.outputs.tag_name }}'
 
         labels = ${{ steps.get_labels.outputs.current_labels }}
-        printf(f'{prev} {labels}')
+        print(f'{prev} {labels}')
 
         input_major_labels = '${{ inputs.major_labels }}'
         input_minor_labels = '${{ inputs.minor_labels }}'
