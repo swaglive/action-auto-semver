@@ -27,14 +27,14 @@ runs:
       run: |
         gh version
         tag_name=$(gh release list -L 1 | awk '{print $1}')
-        echo '::set-output name=tag_name::$tag_name'
+        echo "::set-output name=tag_name::$tag_name"
     - id: get_labels
       shell: bash
       run: |
         commit=${{ github.sha }}
         base='${{ github.ref }}'
         labels=($(gh pr list --limit 1 --state merged --search '$commit' --json  mergeCommit,labels,author,title | jq '.[0].labels | to_entries[].value.name'))
-        echo "::set-output name=current_labels::$(labels)"
+        echo "::set-output name=current_labels::$labels"
     - id: calculate-semver
       shell: python
       run: |
