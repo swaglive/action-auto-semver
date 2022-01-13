@@ -15,7 +15,8 @@ inputs:
     default: patch
   token:
     description: Github token thase use the action
-    required: ${{ github.token }}
+    required: false
+    default: ${{ github.token }}
 runs:
   using: composite
   steps:
