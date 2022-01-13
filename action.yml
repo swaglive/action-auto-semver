@@ -13,13 +13,16 @@ inputs:
     description: labels indicate it would bump patch vresion
     required: false
     default: patch
+  token:
+    description: Github token thase use the action
+    required: ${{ github.token }}
 runs:
   using: composite
   steps:
     - id: last_tag
       shell: bash
       env:
-        GITHUB_TOKEN: ${{ inputs.token }}
+        GITHUB_TOKEN: ${{ input.token }}
       run: |
         gh version
         [[ $(gh release list -L 1) =~ \((.+)\) ]] && echo "::set-output name=tag_name::${BASH_REMATCH[2]}"
