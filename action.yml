@@ -35,6 +35,7 @@ runs:
       run: |
         commit=${{ github.sha }}
         base='${{ github.ref }}'
+        # TODO: if pull request has multiple labels, how to acquire multiple labels
         labels=($(gh pr list --limit 1 --state merged --search '$commit' --json  mergeCommit,labels,author,title | jq '.[0].labels | to_entries[].value.name'))
         echo "::set-output name=current_labels::$labels"
     - id: calculate-semver
