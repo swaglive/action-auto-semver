@@ -30,6 +30,8 @@ runs:
         echo "::set-output name=tag_name::$tag_name"
     - id: get_labels
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
       run: |
         commit=${{ github.sha }}
         base='${{ github.ref }}'
