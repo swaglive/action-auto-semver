@@ -23,14 +23,16 @@ runs:
     - id: last_tag
       shell: bash
       env:
-        GITHUB_TOKEN: ${{ input.token }}
+        GITHUB_TOKEN: ${{ inputs.token }}
       run: |
         gh version
         [[ $(gh release list -L 1) =~ \((.+)\) ]] && echo "::set-output name=tag_name::${BASH_REMATCH[2]}"
     - id: get_labels
       shell: bash
       run: |
-        labels=($(gh pr list --limit 1 --state merged --base release --search '$commit' --json  mergeCommit,labels,author,title | jq '.[0].labels | to_entries[].value.name'))
+        commit = ${{github.sha}}
+        base = '${{github.ref}}'
+        labels=($(gh pr list --limit 1 --state merged --search '$commit' --json  mergeCommit,labels,author,title | jq '.[0].labels | to_entries[].value.name'))
         echo "::set-output name=current_labels::$(labels)"
     - id: calculate-semver
       shell: python
