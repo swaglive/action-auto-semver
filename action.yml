@@ -40,8 +40,8 @@ runs:
     - id: calculate-semver
       shell: python
       run: |
-        prev = '${{ step.last_tags.outputs.tag_name }}'
-        labels = '${{ step.get_labels.outputs.current_labels }}'
+        prev = '${{ steps.last_tags.outputs.tag_name }}'
+        labels = '${{ steps.get_labels.outputs.current_labels }}'
 
         input_major_labels = '${{ inputs.major_labels }}'
         input_minor_labels = '${{ inputs.minor_labels }}'
