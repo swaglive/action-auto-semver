@@ -31,8 +31,8 @@ runs:
     - id: get_labels
       shell: bash
       run: |
-        commit = ${{ github.sha }}
-        base = '${{ github.ref }}'
+        commit=${{ github.sha }}
+        base='${{ github.ref }}'
         labels=($(gh pr list --limit 1 --state merged --search '$commit' --json  mergeCommit,labels,author,title | jq '.[0].labels | to_entries[].value.name'))
         echo "::set-output name=current_labels::$(labels)"
     - id: calculate-semver
