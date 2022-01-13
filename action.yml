@@ -40,12 +40,12 @@ runs:
     - id: calculate-semver
       shell: python
       run: |
-        prev = '${step.last_tags.outputs.tag_name}'
-        labels = '${step.get_labels.outputs.current_labels}'
+        prev = '${{ step.last_tags.outputs.tag_name }}'
+        labels = '${{ step.get_labels.outputs.current_labels }}'
 
-        input_major_labels = '${inputs.major_labels}'
-        input_minor_labels = '${inputs.minor_labels}'
-        input_patch_labels = '${inputs.patch_labels}'
+        input_major_labels = '${{ inputs.major_labels }}'
+        input_minor_labels = '${{ inputs.minor_labels }}'
+        input_patch_labels = '${{ inputs.patch_labels }}'
 
 
         previous_version = prev.split('.')
