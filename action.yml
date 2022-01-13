@@ -40,8 +40,9 @@ runs:
     - id: calculate-semver
       shell: python
       run: |
-        prev = ${{ steps.last_tag.outputs.tag_name }}
+        prev = ${{ steps.last_tag.outputs.tag_name }}'
         labels = ${{ steps.get_labels.outputs.current_labels }}
+        printf(f'{prev} {labels}')
 
         input_major_labels = '${{ inputs.major_labels }}'
         input_minor_labels = '${{ inputs.minor_labels }}'
@@ -69,6 +70,7 @@ runs:
             minor = minor + 1;
         elif bump_patch:
             patch = patch + 1;
+        # if not bump any of version, it return previous one
         version = f'{major}.{minor}.{patch}'
         print(f'{version}')
         print(f'::set-output name=version::{version}')
