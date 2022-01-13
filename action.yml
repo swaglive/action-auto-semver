@@ -26,7 +26,7 @@ runs:
         GITHUB_TOKEN: ${{ inputs.token }}
       run: |
         gh version
-        tag_name = $(gh release list -L 1 | awk '{print $1}')
+        tag_name=$(gh release list -L 1 | awk '{print $1}')
         echo '::set-output name=tag_name::$tag_name'
     - id: get_labels
       shell: bash
