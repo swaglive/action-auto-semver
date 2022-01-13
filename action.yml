@@ -60,14 +60,14 @@ runs:
         bump_patch = len (set(input_patch_labels.split(',')).intersection(labels)) > 0
 
 
-        if bumpMajor:
+        if bump_major:
             major = major + 1;
             minor = 0;
             patch = 0;
-        elif bumpMinor:
+        elif bump_minor:
             major = 0;
             minor = minor + 1;
-        elif bumpPatch:
+        elif bump_patch:
             patch = patch + 1;
-        version = f'{bump_major}.{bump_minor}.{bump_patch}'
+        version = f'{major}.{minor}.{patch}'
         print(f'::set-output name=version::{version}')
