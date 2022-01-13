@@ -1,40 +1,18 @@
 name: Auto Semver
 description: Auto generate semver
 inputs:
-  release_branch:
-    description: branch pr looking from.
+  major_labels:
+    description: labels indicate it would bump major vresion
     required: false
-  pattern:
-    description: Semver pattern string
+    default: major
+  minor_labels:
+    description: labels indicate it would bump minor vresion
     required: false
-    default: ^v?(?P<major>[0-9]+)(?:\.(?P<minor>[0-9]+))?(?:\.(?P<patch>[0-9]+))?(?:\-(?P<prerelease>[\w-]+))?(?:\+(?P<build>[\w-]+))?$
-  token:
-    description: Github Token
-    required: true
-    default: ${{ github.token }}
-  repository:
-    description: Repository to create the release for
-    required: true
-    default: ${{ github.repository }}
-# outputs:
-#   version:
-#     description: The full matched version string
-#     value: ${{ steps.semver.outputs.version }}
-#   major:
-#     description: Semver major version
-#     value: ${{ steps.semver.outputs.major }}
-#   minor:
-#     description: Semver minor version
-#     value: ${{ steps.semver.outputs.minor }}
-#   patch:
-#     description: Semver patch version
-#     value: ${{ steps.semver.outputs.patch }}
-#   prerelease:
-#     description: Semver prerelease version
-#     value: ${{ steps.semver.outputs.prerelease }}
-#   build:
-#     description: Semver build version
-#     value: ${{ steps.semver.outputs.build }}
+    default: minor
+  patch_labels:
+    description: labels indicate it would bump patch vresion
+    required: false
+    default: patch
 runs:
   using: composite
   steps:
@@ -45,76 +23,42 @@ runs:
       run: |
         gh version
         [[ $(gh release list -L 1) =~ \((.+)\) ]] && echo "::set-output name=tag_name::${BASH_REMATCH[2]}"
-    - id: semver
+    - id: get_labels
+      shell: bash
+      run: |
+        labels=($(gh pr list --limit 1 --state merged --base release --search '$commit' --json  mergeCommit,labels,author,title | jq '.[0].labels | to_entries[].value.name'))
+        echo "::set-output name=current_labels::$(labels)"
+    - id: calculate-semver
       shell: python
       run: |
-        import re
-        import os
+        prev = '${step.last_tags.outputs.tag_name}'
+        labels = '${step.get_labels.outputs.current_labels}'
 
-        input = '${{ steps.last_tags.output.tag_name }}'
-        pattern = re.compile('${{ inputs.pattern }}')
+        input_major_labels = '${inputs.major_labels}'
+        input_minor_labels = '${inputs.minor_labels}'
+        input_patch_labels = '${inputs.patch_labels}'
 
-        if matched := pattern.match(input):
-            print(f'::set-output name=version::{matched.string}')
 
-            for key, value in matched.groupdict().items():
-              if not value:
-                continue
+        previous_version = prev.split('.')
+        labels = set(labels)
 
-              os.environ[key]=value
-    - shell: bash
-      run: |
-        echo $major
-        major=0
-        minor=0
-        patch=0
+        major = int(previous_version[0])
+        minor = int(previous_version[1])
+        patch = int(previous_version[2])
 
-        MAJOR_LABELS=($(echo ${{ inputs.major_lebels }} | tr ',' ' '))
-        MINOR_LABELS=($(echo ${{ inputs.minor_labels }} | tr ',' ' '))
-        PATCH_LABELS=($(echo ${{ inputs.patch_labels }} | tr ',' ' '))
+        bump_major = len (set(input_major_labels.split(',')).intersection(labels)) > 0
+        bump_minor = len (set(input_minor_labels.split(',')).intersection(labels)) > 0
+        bump_patch = len (set(input_patch_labels.split(',')).intersection(labels)) > 0
 
-        echo ${MAJOR_LABELS[*]}
-        echo ${MINOR_LABELS[*]}
-        echo ${PATCH_LABELS[*]}
 
-        [[ $(gh release list -R ${{ github.repo }} -L 1) =~ \((.+)\) ]] && last_tag=${BASH_REMATCH[2]}
-
-        # Fetch commit since last tag
-
-        if $last_tag
-          do
-            git fetch --tags
-            commits=($(git log HEAD...$last_tag --format="%H"))
-          done
-
-        # Parse pr labels
-        if $commits
-          for commit in $commits
-            do
-              lebels=($(gh pr list --limit 1 --state merged --base release --search '$commit' --json  mergeCommit,number,labels,author,title | jq '.[0].labels | to_entries[].value.name'))
-              [[ $labels[*] =~  ([$( IFS='|'; echo "${MAJOR_LABELS[*]}")]+) ]] && MAJOR_BUPB=1
-              [[ $labels[*] =~  ([$( IFS='|'; echo "${MINOR_LABELS[*]}")]+) ]] && MINOR_BUMP=1
-              [[ $labels[*] =~  ([$( IFS='|'; echo "${PATCH_LABELS[*]}")]+) ]] && PATCH_BUMP=1
-            done
-        fi
-
-        [[$PATCH_BUMP == 1]] && patch=$((patch+1))
-        [[$MINOR_BUMP == 1]] && minor=$((minor+1)) && patch=0
-        [[$MAJOR_BUMP == 1]] && major=$((major+1)) && minor=0 && patch=0
-
-  # - shell: python
-  #   id: semver
-  #   run: |
-  #     import re
-
-  #     input = '${{ inputs.input }}'
-  #     pattern = re.compile('${{ inputs.pattern }}')
-
-  #     if matched := pattern.match(input):
-  #         print(f'::set-output name=version::{matched.string}')
-
-  #         for key, value in matched.groupdict().items():
-  #           if not value:
-  #             continue
-
-  #           print(f'::set-output name={key}::{value}')
+        if bumpMajor:
+            major = major + 1;
+            minor = 0;
+            patch = 0;
+        elif bumpMinor:
+            major = 0;
+            minor = minor + 1;
+        elif bumpPatch:
+            patch = patch + 1;
+        version = f'{bump_major}.{bump_minor}.{bump_patch}')
+        print(f'::set-output name=version::{version}'})

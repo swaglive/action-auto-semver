@@ -1,13 +1,13 @@
 name: test action
 on:
   push:
-
+    branches:
+      - main
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: auto semver
-      uses: ./
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: auto semver
+        uses: ./
