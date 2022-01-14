@@ -26,7 +26,7 @@ runs:
         GITHUB_TOKEN: ${{ inputs.token }}
       run: |
         gh version
-        tag_name=$(gh release list -L 1 | awk '{print $1}')
+        tag_name=$(gh release list -L 1 | awk '{print $3}')
         echo "::set-output name=tag_name::$tag_name"
     - id: get_labels
       shell: bash
@@ -35,12 +35,14 @@ runs:
       run: |
         commit=${{ github.sha }}
         base='${{ github.ref }}'
-        # TODO: if pull request has multiple labels, how to acquire multiple labels
-        labels=($(gh pr list --limit 1 --state merged --search '$commit' --json  mergeCommit,labels,author,title | jq '.[0].labels | to_entries[].value.name'))
+        # this would return multiple labels, since pull request may attach multiple labels and one of the label may indicate the predefined rsemver label
+        labels=($(gh pr list --limit 1 --state merged --search '$commit' --json  mergeCommit,labels,author,title | jq '.[0].labels | map(.name)'))
         echo "::set-output name=current_labels::$labels"
     - id: calculate-semver
       shell: python
       run: |
+        SEP_SYMBOL = ','
+
         prev = '${{ steps.last_tag.outputs.tag_name }}'
 
         labels = ${{ steps.get_labels.outputs.current_labels }}
@@ -58,9 +60,9 @@ runs:
         minor = int(previous_version[1])
         patch = int(previous_version[2])
 
-        bump_major = len (set(input_major_labels.split(',')).intersection(labels)) > 0
-        bump_minor = len (set(input_minor_labels.split(',')).intersection(labels)) > 0
-        bump_patch = len (set(input_patch_labels.split(',')).intersection(labels)) > 0
+        bump_major = len (set(input_major_labels.split(SEP_SYMBOL)).intersection(labels)) > 0
+        bump_minor = len (set(input_minor_labels.split(SEP_SYMBOL)).intersection(labels)) > 0
+        bump_patch = len (set(input_patch_labels.split(SEP_SYMBOL)).intersection(labels)) > 0
 
 
         if bump_major:
