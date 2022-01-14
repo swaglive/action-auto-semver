@@ -1,1 +1,1 @@
-# test-action-2
+# action-auto-semver
