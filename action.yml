@@ -27,6 +27,9 @@ runs:
       run: |
         gh version
         # prevent there are release title contain space, print count from last column -1
+        # gh release list would show following
+        # <release title> Latest (tag_name) time
+
         tag_name=$(gh release list -L 1 | awk '{print $(NF - 1)}')
         echo "::set-output name=tag_name::$tag_name"
     - id: get_labels
@@ -37,8 +40,8 @@ runs:
         commit=${{ github.sha }}
         base='${{ github.ref }}'
         # this would return multiple labels, since pull request may attach multiple labels and one of the label may indicate the predefined semver label
-        # `$commit` try to match  mergeCommit by `$commit`, it should exist when trigger is `on.push master`  
-        # TODO: maybe handle cannot find the PR's labels by current commit
+        # try to match  mergeCommit by `$commit`, it should exist when trigger is `on.push master`  
+        # TODO: maybe handle cannot find the PR's labels by current commit, if the trigger is not from PR merged (like on.push.tags)
         labels=$(gh pr list --limit 1 --state merged --search '$commit' --json  mergeCommit,labels | jq '.[0].labels | map(.name) | join(",")')
         echo "::set-output name=current_labels::$labels"
     - id: calculate-semver
@@ -46,7 +49,6 @@ runs:
       run: |
         prev = '${{ steps.last_tag.outputs.tag_name }}'
         labels = ${{ steps.get_labels.outputs.current_labels }}
-        print(f'{prev} {labels}')
 
         input_major_labels = '${{ inputs.major_labels }}'
         input_minor_labels = '${{ inputs.minor_labels }}'
@@ -76,5 +78,4 @@ runs:
             patch = patch + 1;
         # if not bump any of version, it return previous one
         version = f'{major}.{minor}.{patch}'
-        print(f'{version}')
         print(f'::set-output name=version::{version}')
