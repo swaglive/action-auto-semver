@@ -14,9 +14,13 @@ inputs:
     required: false
     default: patch
   token:
-    description: Github token thase use the action
+    description: the repo's Github token that use the action
     required: false
     default: ${{ github.token }}
+  default_previous_tag_name:
+    description: the default previous tag if there no release tag found
+    required: false
+    default: "0.0.0"
 runs:
   using: composite
   steps:
@@ -31,6 +35,7 @@ runs:
         # <release title> Latest (tag_name) time
 
         tag_name=$(gh release list -L 1 | awk '{print $(NF - 1)}')
+        [[ $tag_name == '' ]] && tag_name='${{ inputs.default_previous_tag_name }}'
         echo "::set-output name=tag_name::$tag_name"
     - id: get_labels
       shell: bash
