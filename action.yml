@@ -26,7 +26,8 @@ runs:
         GITHUB_TOKEN: ${{ inputs.token }}
       run: |
         gh version
-        tag_name=$(gh release list -L 1 | awk '{print $3}')
+        # prevent there are release title contain space, print count from last column -1
+        tag_name=$(gh release list -L 1 | awk '{print $(NF - 1)}')
         echo "::set-output name=tag_name::$tag_name"
     - id: get_labels
       shell: bash
@@ -35,7 +36,9 @@ runs:
       run: |
         commit=${{ github.sha }}
         base='${{ github.ref }}'
-        # this would return multiple labels, since pull request may attach multiple labels and one of the label may indicate the predefined rsemver label
+        # this would return multiple labels, since pull request may attach multiple labels and one of the label may indicate the predefined semver label
+        # `$commit` try to match  mergeCommit by `$commit`, it should exist when trigger is `on.push master`  
+        # TODO: maybe handle cannot find the PR's labels by current commit
         labels=($(gh pr list --limit 1 --state merged --search '$commit' --json  mergeCommit,labels,author,title | jq '.[0].labels | map(.name) | join(",")'))
         echo "::set-output name=current_labels::$labels"
     - id: calculate-semver
@@ -51,7 +54,7 @@ runs:
 
 
         previous_version = prev.split('.')
-        labels = set([labels])
+        labels = set(labels.split(','))
 
         major = int(previous_version[0])
         minor = int(previous_version[1])
