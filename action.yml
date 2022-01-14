@@ -36,15 +36,12 @@ runs:
         commit=${{ github.sha }}
         base='${{ github.ref }}'
         # this would return multiple labels, since pull request may attach multiple labels and one of the label may indicate the predefined rsemver label
-        labels=($(gh pr list --limit 1 --state merged --search '$commit' --json  mergeCommit,labels,author,title | jq '.[0].labels | map(.name)'))
+        labels=($(gh pr list --limit 1 --state merged --search '$commit' --json  mergeCommit,labels,author,title | jq '.[0].labels | map(.name) | join(",")'))
         echo "::set-output name=current_labels::$labels"
     - id: calculate-semver
       shell: python
       run: |
-
-
         prev = '${{ steps.last_tag.outputs.tag_name }}'
-
         labels = ${{ steps.get_labels.outputs.current_labels }}
         print(f'{prev} {labels}')
 
