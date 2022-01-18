@@ -47,7 +47,7 @@ runs:
         # try to match  mergeCommit by `$commit`, it should exist when trigger is `on.push master`  
         # TODO: maybe handle cannot find the PR's labels by current commit, if the trigger is not from PR merged (like on.push.tags)
         labels=$(gh pr list --limit 1 --state merged --search '$commit' --json  mergeCommit,labels \
-        | jq -r '.[0].labels | map(.name) | join(",")')
+        | jq -r '.[0].labels | select(length > 0) | map(.name) | join(",")')
         echo "::set-output name=current_labels::$labels"
     - id: calculate-semver
       shell: python
@@ -59,7 +59,6 @@ runs:
         input_minor_labels = '${{ inputs.minor_labels }}'
         input_patch_labels = '${{ inputs.patch_labels }}'
 
-
         previous_version = prev.split('.')
         labels = set(labels.split(','))
 
@@ -70,7 +69,6 @@ runs:
         bump_major = len (set(input_major_labels.split(',')).intersection(labels)) > 0
         bump_minor = len (set(input_minor_labels.split(',')).intersection(labels)) > 0
         bump_patch = len (set(input_patch_labels.split(',')).intersection(labels)) > 0
-
 
         if bump_major:
             major = major + 1;
@@ -84,3 +82,6 @@ runs:
         # if not bump any of version, it return previous one
         version = f'{major}.{minor}.{patch}'
         print(f'::set-output name=version::{version}')
+        print(f'::set-output name=major::{major}')
+        print(f'::set-output name=minor::{minor}')
+        print(f'::set-output name=patch::{patch}')
