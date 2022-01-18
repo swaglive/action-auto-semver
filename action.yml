@@ -48,7 +48,6 @@ runs:
         # TODO: maybe handle cannot find the PR's labels by current commit, if the trigger is not from PR merged (like on.push.tags)
         labels=$(gh pr list --limit 1 --state merged --search $commit --json  mergeCommit,labels \
         | jq -r '.[0].labels | select(length > 0) | map(.name) | join(" ")')
-        echo "::set-output name=current_labels::"
         echo "::set-output name=current_labels::$labels"
     - id: calculate-semver
       shell: python
