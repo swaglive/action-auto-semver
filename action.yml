@@ -2,15 +2,15 @@ name: Auto Semver
 description: Auto generate semver
 inputs:
   major_labels:
-    description: labels indicate it would bump major version
+    description: space-separated labels indicate it would bump major version
     required: false
     default: major
   minor_labels:
-    description: labels indicate it would bump minor version
+    description: space-separated labels indicate it would bump minor version
     required: false
     default: minor
   patch_labels:
-    description: labels indicate it would bump patch version
+    description: space-separated labels indicate it would bump patch version
     required: false
     default: patch
   token:
@@ -47,7 +47,7 @@ runs:
         # try to match  mergeCommit by `$commit`, it should exist when trigger is `on.push master`  
         # TODO: maybe handle cannot find the PR's labels by current commit, if the trigger is not from PR merged (like on.push.tags)
         labels=$(gh pr list --limit 1 --state merged --search $commit --json  mergeCommit,labels \
-        | jq -r '.[0].labels | select(length > 0) | map(.name) | join(",")')
+        | jq -r '.[0].labels | select(length > 0) | map(.name) | join(" ")')
         echo "::set-output name=current_labels::"
         echo "::set-output name=current_labels::$labels"
     - id: calculate-semver
@@ -55,12 +55,14 @@ runs:
       run: |
         import re;
 
+        SPACE_SEP = " ";
+
         labels = '${{ steps.get_labels.outputs.current_labels }}'
         input_major_labels = '${{ inputs.major_labels }}'
         input_minor_labels = '${{ inputs.minor_labels }}'
         input_patch_labels = '${{ inputs.patch_labels }}'
 
-        labels = set(labels.split(','))
+        labels = set(labels.split(SPACE_SEP))
 
         ## REF: https://github.com/swaglive/action-semver/blob/main/action.yaml#L11
         version_regexp = re.compile('^v?(?P<major>[0-9]+)(?:\.(?P<minor>[0-9]+))?(?:\.(?P<patch>[0-9]+))?(?:\-(?P<prerelease>[\w-]+))?(?:\+(?P<build>[\w-]+))?$')
@@ -72,9 +74,9 @@ runs:
         minor = int(previous_versions['minor'])
         patch = int(previous_versions['patch'])
 
-        bump_major = len (set(input_major_labels.split(',')).intersection(labels)) > 0
-        bump_minor = len (set(input_minor_labels.split(',')).intersection(labels)) > 0
-        bump_patch = len (set(input_patch_labels.split(',')).intersection(labels)) > 0
+        bump_major = len (set(input_major_labels.split(SPACE_SEP)).intersection(labels)) > 0
+        bump_minor = len (set(input_minor_labels.split(SPACE_SEP)).intersection(labels)) > 0
+        bump_patch = len (set(input_patch_labels.split(SPACE_SEP)).intersection(labels)) > 0
 
         if bump_major:
             major = major + 1;
