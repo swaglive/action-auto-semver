@@ -1,17 +1,21 @@
 name: test action
 on:
-  push:
-
+  pull_request:
+    types: [closed]
+    branches:
+      - master
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: auto semver
         uses: ./
+
         with:
           major_labels: feature major
           minor_labels: bugfix minor
           patch_labels: hotfix patch
+          pr_number: ${{ github.event.pull_request.number }}
+          previous_semver: "v1.1.1"
