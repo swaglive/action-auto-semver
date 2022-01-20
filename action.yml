@@ -61,9 +61,9 @@ runs:
         minor = int(${{ steps.auto-semver.outputs.minor }})
         patch = int(${{ steps.auto-semver.outputs.patch }})
 
-        bump_major = len (set(input_major_labels.split(SPACE_SEP)).intersection(labels)) > 0
-        bump_minor = len (set(input_minor_labels.split(SPACE_SEP)).intersection(labels)) > 0
-        bump_patch = len (set(input_patch_labels.split(SPACE_SEP)).intersection(labels)) > 0
+        bump_major = set(input_major_labels.split(SPACE_SEP)).intersection(labels)
+        bump_minor = set(input_minor_labels.split(SPACE_SEP)).intersection(labels)
+        bump_patch = set(input_patch_labels.split(SPACE_SEP)).intersection(labels)
 
         if bump_major:
             major = major + 1;
