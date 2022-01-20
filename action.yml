@@ -17,43 +17,37 @@ inputs:
     description: the repo's Github token that use the action
     required: false
     default: ${{ github.token }}
-  default_previous_tag_name:
-    description: the default previous tag if there no release tag found
+  repo:
     required: false
-    default: "0.0.0"
+    default: ${{ github.repository }}
+  pr_number:
+    description: the PR number that the repo  from
+    required: true
+  previous_semver:
+    description: the previous semver that increment from
+    required: true
 runs:
   using: composite
   steps:
-    - id: last_tag
-      shell: bash
-      env:
-        GITHUB_TOKEN: ${{ inputs.token }}
-      run: |
-        gh version
-        # prevent there are release title contain space, print count from last column -1
-        # gh release list would show following
-        # <release title> Latest (tag_name) time
-
-        tag_name=$(gh release list -L 1 | awk '{print $(NF - 1)}')
-        [[ $tag_name == '' ]] && tag_name='${{ inputs.default_previous_tag_name }}'
-        echo "::set-output name=tag_name::$tag_name"
     - id: get_labels
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.token }}
+        GH_REPO: ${{ inputs.repo }}
+        PR_NUMBER: ${{ inputs.pr_number }}
       run: |
-        commit=${{ github.sha }}
         # this would return multiple labels, since pull request may attach multiple labels and one of the label may indicate the predefined semver label
         # try to match  mergeCommit by `$commit`, it should exist when trigger is `on.push master`  
-        # TODO: maybe handle cannot find the PR's labels by current commit, if the trigger is not from PR merged (like on.push.tags)
-        labels=$(gh pr list --limit 1 --state merged --search $commit --json  mergeCommit,labels \
-        | jq -r '.[0].labels | select(length > 0) | map(.name) | join(" ")')
+        labels=$(gh pr view $PR_NUMBER --json labels \
+        | jq -r '.labels | select(length > 0) | map(.name) | join(" ")')
         echo "::set-output name=current_labels::$labels"
+    - id: auto-semver
+      uses: "swaglive/action-semver@v1"
+      with:
+        input: ${{ inputs.previous_semver }}
     - id: calculate-semver
       shell: python
       run: |
-        import re;
-
         SPACE_SEP = " ";
 
         labels = '${{ steps.get_labels.outputs.current_labels }}'
@@ -63,15 +57,9 @@ runs:
 
         labels = set(labels.split(SPACE_SEP))
 
-        ## REF: https://github.com/swaglive/action-semver/blob/main/action.yaml#L11
-        version_regexp = re.compile('^v?(?P<major>[0-9]+)(?:\.(?P<minor>[0-9]+))?(?:\.(?P<patch>[0-9]+))?(?:\-(?P<prerelease>[\w-]+))?(?:\+(?P<build>[\w-]+))?$')
-
-        prev = '${{ steps.last_tag.outputs.tag_name }}'
-        previous_versions = version_regexp.match(prev).groupdict()
-
-        major = int(previous_versions['major'])
-        minor = int(previous_versions['minor'])
-        patch = int(previous_versions['patch'])
+        major = int(${{ steps.auto-semver.outputs.major }})
+        minor = int(${{ steps.auto-semver.outputs.minor }})
+        patch = int(${{ steps.auto-semver.outputs.patch }})
 
         bump_major = len (set(input_major_labels.split(SPACE_SEP)).intersection(labels)) > 0
         bump_minor = len (set(input_minor_labels.split(SPACE_SEP)).intersection(labels)) > 0
@@ -79,14 +67,12 @@ runs:
 
         if bump_major:
             major = major + 1;
-            minor = 0;
-            patch = 0;
-        elif bump_minor:
-            patch = 0;
+        if bump_minor:
             minor = minor + 1;
-        elif bump_patch:
+        if bump_patch:
             patch = patch + 1;
         # if not bump any of version, it return previous one
+
         version = f'{major}.{minor}.{patch}'
         print(f'::set-output name=version::{version}')
         print(f'::set-output name=major::{major}')
