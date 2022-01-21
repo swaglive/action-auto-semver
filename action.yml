@@ -17,11 +17,12 @@ inputs:
     description: the repo's Github token that use the action
     required: false
     default: ${{ github.token }}
-  repo:
+  repository:
+    description: the repo that user the action
     required: false
     default: ${{ github.repository }}
   pr_number:
-    description: the PR number that the repo  from
+    description: the PR number that the pr from
     required: true
   previous_semver:
     description: the previous semver that increment from
@@ -33,43 +34,36 @@ runs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.token }}
-        GH_REPO: ${{ inputs.repo }}
+        GH_REPO: ${{ inputs.repository }}
         PR_NUMBER: ${{ inputs.pr_number }}
       run: |
         # this would return multiple labels, since pull request may attach multiple labels and one of the label may indicate the predefined semver label
         labels=$(gh pr view $PR_NUMBER --json labels \
-        | jq -r '.labels | select(length > 0) | map(.name) | join(" ")')
-        echo "::set-output name=current_labels::$labels"
-    - id: auto-semver
-      uses: "swaglive/action-semver@v1"
+        | jq -r '.labels[].name' | xargs echo)
+        echo "::set-output name=labels::$labels"
+    - id: semver
+      uses: swaglive/action-semver@v1
       with:
         input: ${{ inputs.previous_semver }}
-    - id: calculate-semver
+    - id: calculate_semver
       shell: python
       run: |
-        SPACE_SEP = " ";
 
-        labels = '${{ steps.get_labels.outputs.current_labels }}'
+        labels = '${{ steps.get_labels.outputs.labels }}'
         input_major_labels = '${{ inputs.major_labels }}'
         input_minor_labels = '${{ inputs.minor_labels }}'
         input_patch_labels = '${{ inputs.patch_labels }}'
 
-        labels = set(labels.split(SPACE_SEP))
+        labels = set(labels.split())
 
-        major = int(${{ steps.auto-semver.outputs.major }})
-        minor = int(${{ steps.auto-semver.outputs.minor }})
-        patch = int(${{ steps.auto-semver.outputs.patch }})
+        major = int(${{ steps.semver.outputs.major }})
+        minor = int(${{ steps.semver.outputs.minor }})
+        patch = int(${{ steps.semver.outputs.patch }})
 
-        bump_major = set(input_major_labels.split(SPACE_SEP)).intersection(labels)
-        bump_minor = set(input_minor_labels.split(SPACE_SEP)).intersection(labels)
-        bump_patch = set(input_patch_labels.split(SPACE_SEP)).intersection(labels)
+        major = major + bool (set(input_major_labels.split()) & labels);
+        minor = minor + bool (set(input_minor_labels.split()) & labels);
+        patch = patch + bool (set(input_patch_labels.split()) & labels);
 
-        if bump_major:
-            major = major + 1;
-        if bump_minor:
-            minor = minor + 1;
-        if bump_patch:
-            patch = patch + 1;
         # if not bump any of version, it return previous one
 
         version = f'{major}.{minor}.{patch}'
