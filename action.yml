@@ -27,6 +27,19 @@ inputs:
   previous_semver:
     description: the previous semver that increment from
     required: true
+outputs:
+  version:
+    description: The full matched version string
+    value: ${{ steps.auto_semver.outputs.version }}
+  major:
+    description: Semver major version
+    value: ${{ steps.auto_semver.outputs.major }}
+  minor:
+    description: Semver minor version
+    value: ${{ steps.auto_semver.outputs.minor }}
+  patch:
+    description: Semver patch version
+    value: ${{ steps.auto_semver.outputs.patch }}
 runs:
   using: composite
   steps:
@@ -45,7 +58,7 @@ runs:
       uses: swaglive/action-semver@v1
       with:
         input: ${{ inputs.previous_semver }}
-    - id: calculate_semver
+    - id: auto_semver
       shell: python
       run: |
 
