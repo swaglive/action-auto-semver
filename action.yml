@@ -60,13 +60,16 @@ runs:
         minor = int(${{ steps.semver.outputs.minor }})
         patch = int(${{ steps.semver.outputs.patch }})
 
-        major = major + bool (set(input_major_labels.split()) & labels);
-        minor = minor + bool (set(input_minor_labels.split()) & labels);
-        patch = patch + bool (set(input_patch_labels.split()) & labels);
+        major = major + bool(set(input_major_labels.split()) & labels)
+        minor = minor + bool(set(input_minor_labels.split()) & labels)
+        patch = patch + bool(set(input_patch_labels.split()) & labels)
 
         # if not bump any of version, it return previous one
-
         version = f'{major}.{minor}.{patch}'
+        prev_version = '${{ inputs.previous_semver }}'
+        if prev_version.startswith('v'):
+          version = f'v{version}'
+
         print(f'::set-output name=version::{version}')
         print(f'::set-output name=major::{major}')
         print(f'::set-output name=minor::{minor}')
